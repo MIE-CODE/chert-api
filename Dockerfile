@@ -9,8 +9,8 @@ RUN corepack enable && corepack prepare yarn@stable --activate
 COPY package.json yarn.lock ./
 COPY tsconfig.json ./
 
-# Install dependencies
-RUN yarn install --immutable
+# Install dependencies (allow lockfile updates in builder stage)
+RUN yarn install
 
 # Copy source code
 COPY src ./src
@@ -26,8 +26,11 @@ WORKDIR /app
 # Install yarn
 RUN corepack enable && corepack prepare yarn@stable --activate
 
-# Copy package files
-COPY package.json yarn.lock ./
+# Copy package.json from build context
+COPY package.json ./
+
+# Copy updated yarn.lock from builder stage (where it was updated)
+COPY --from=builder /app/yarn.lock ./
 
 # Install only production dependencies
 RUN NODE_ENV=production yarn install --immutable
