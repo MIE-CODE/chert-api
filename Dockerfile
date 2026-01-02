@@ -2,29 +2,35 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Install yarn
+RUN corepack enable && corepack prepare yarn@stable --activate
+
 # Copy package files
-COPY package*.json ./
+COPY package.json yarn.lock ./
 COPY tsconfig.json ./
 
 # Install dependencies
-RUN npm ci
+RUN yarn install --frozen-lockfile
 
 # Copy source code
 COPY src ./src
 
 # Build TypeScript
-RUN npm run build
+RUN yarn build
 
 # Production stage
 FROM node:20-alpine
 
 WORKDIR /app
 
+# Install yarn
+RUN corepack enable && corepack prepare yarn@stable --activate
+
 # Copy package files
-COPY package*.json ./
+COPY package.json yarn.lock ./
 
 # Install only production dependencies
-RUN npm ci --only=production
+RUN yarn install --frozen-lockfile --production
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
