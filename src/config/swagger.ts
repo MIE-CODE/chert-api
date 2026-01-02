@@ -40,12 +40,16 @@ const options: swaggerJsdoc.Options = {
 const swaggerSpec = swaggerJsdoc(options);
 
 export const setupSwagger = (app: Express): void => {
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  const swaggerServe = swaggerUi.serve;
+  const swaggerSetup = swaggerUi.setup(swaggerSpec, {
     customCss: '.swagger-ui .topbar { display: none }',
     customSiteTitle: 'Chert API Documentation',
-  }));
+  });
 
-  app.get('/api-docs.json', (req, res) => {
+  app.use('/api-docs', swaggerServe as any);
+  app.get('/api-docs', swaggerSetup as any);
+
+  app.get('/api-docs.json', (_req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerSpec);
   });

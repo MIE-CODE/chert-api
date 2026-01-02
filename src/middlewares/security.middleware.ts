@@ -9,7 +9,7 @@ export const setupSecurity = (app: Express): void => {
 
   // CORS configuration - allow all origins
   const corsOptions = {
-    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    origin: (_origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Allow all origins
       callback(null, true);
     },

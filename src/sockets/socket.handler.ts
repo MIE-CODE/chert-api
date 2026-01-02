@@ -21,7 +21,7 @@ const connectedUsers = new Map<string, SocketUser[]>();
 export const initializeSocket = async (httpServer: HTTPServer): Promise<SocketIOServer> => {
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: (origin, callback) => {
+      origin: (_origin, callback) => {
         // Allow all origins
         callback(null, true);
       },
@@ -148,16 +148,19 @@ export const initializeSocket = async (httpServer: HTTPServer): Promise<SocketIO
         });
 
         if (!chat) {
-          return socket.emit('error', { message: 'Chat not found or access denied' });
+          socket.emit('error', { message: 'Chat not found or access denied' });
+          return;
         }
 
         // Validate message
         if (type === MessageType.TEXT && !content) {
-          return socket.emit('error', { message: 'Content is required for text messages' });
+          socket.emit('error', { message: 'Content is required for text messages' });
+          return;
         }
 
         if ((type === MessageType.IMAGE || type === MessageType.FILE) && !fileUrl) {
-          return socket.emit('error', { message: 'File URL is required for file/image messages' });
+          socket.emit('error', { message: 'File URL is required for file/image messages' });
+          return;
         }
 
         // Create message
@@ -238,7 +241,8 @@ export const initializeSocket = async (httpServer: HTTPServer): Promise<SocketIO
         });
 
         if (!chat) {
-          return socket.emit('error', { message: 'Chat not found or access denied' });
+          socket.emit('error', { message: 'Chat not found or access denied' });
+          return;
         }
 
         if (messageIds && messageIds.length > 0) {

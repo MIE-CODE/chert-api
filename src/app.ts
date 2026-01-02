@@ -30,7 +30,7 @@ const uploadDir = process.env.UPLOAD_DIR || './uploads';
 app.use('/uploads', express.static(path.resolve(uploadDir)));
 
 // Request logging
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   logger.info(`${req.method} ${req.path}`);
   next();
 });
@@ -39,7 +39,7 @@ app.use((req, res, next) => {
 setupSwagger(app);
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({
     success: true,
     message: 'Chert API is running',
@@ -55,7 +55,7 @@ app.use('/api/messages', messagesRoutes);
 app.use('/api/files', uploadRoutes);
 
 // 404 handler
-app.use((req, res) => {
+app.use((_req, res) => {
   res.status(404).json({
     success: false,
     message: 'Route not found',

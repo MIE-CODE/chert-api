@@ -5,7 +5,7 @@ import { AppError } from '../utils/errors';
 
 export const authMiddleware = (
   req: AuthRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): void => {
   try {

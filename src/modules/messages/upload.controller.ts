@@ -2,10 +2,9 @@ import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../../types';
 import { AppError } from '../../utils/errors';
 import { uploadSingle } from '../../utils/upload';
-import path from 'path';
 
 export const uploadFile = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  uploadSingle(req, res, (err) => {
+  uploadSingle(req as any, res, (err: any) => {
     if (err) {
       return next(err);
     }

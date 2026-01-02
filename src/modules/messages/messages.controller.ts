@@ -1,5 +1,4 @@
 import { Response, NextFunction } from 'express';
-import mongoose from 'mongoose';
 import Message from './message.model';
 import Chat from '../chats/chat.model';
 import { AuthRequest } from '../../types';

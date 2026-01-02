@@ -1,5 +1,4 @@
 import { Response, NextFunction } from 'express';
-import mongoose from 'mongoose';
 import Chat from './chat.model';
 import Message from '../messages/message.model';
 import User from '../users/user.model';
@@ -86,11 +85,12 @@ export const createChat = async (req: AuthRequest, res: Response, next: NextFunc
 
       if (existingChat) {
         await existingChat.populate('participants', 'username avatar isOnline phoneNumber');
-        return res.json({
+        res.json({
           success: true,
           message: 'Chat already exists',
           data: { chat: existingChat },
         });
+        return;
       }
 
       const chat = await Chat.create({
@@ -309,10 +309,11 @@ export const removeParticipant = async (req: AuthRequest, res: Response, next: N
         chat.admin = chat.participants[0];
       } else {
         await Chat.findByIdAndDelete(id);
-        return res.json({
+        res.json({
           success: true,
           message: 'Chat deleted as no participants remain',
         });
+        return;
       }
     }
 
@@ -407,11 +408,12 @@ export const startChat = async (req: AuthRequest, res: Response, next: NextFunct
 
     if (existingChat) {
       await existingChat.populate('participants', 'username avatar isOnline phoneNumber');
-      return res.json({
+      res.json({
         success: true,
         message: 'Chat already exists',
         data: { chat: existingChat },
       });
+      return;
     }
 
     // Create new one-to-one chat
