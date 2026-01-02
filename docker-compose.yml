@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chert-api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongo:27017/chert
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-change-me-in-production}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      - mongo
+      - redis
+    restart: unless-stopped
+    networks:
+      - chert-network
+
+  mongo:
+    image: mongo:7
+    container_name: chert-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+    networks:
+      - chert-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: chert-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - chert-network
+
+volumes:
+  mongo-data:
+  redis-data:
+
+networks:
+  chert-network:
+    driver: bridge
+
