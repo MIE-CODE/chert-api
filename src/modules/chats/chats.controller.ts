@@ -411,7 +411,7 @@ export const startChat = async (req: AuthRequest, res: Response, next: NextFunct
       res.json({
         success: true,
         message: 'Chat already exists',
-        data: { chat: existingChat },
+        data: existingChat ,
       });
       return;
     }
