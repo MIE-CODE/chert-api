@@ -5,15 +5,15 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Enable corepack for yarn
-RUN corepack enable && corepack prepare yarn@stable --activate
+# Enable corepack and use yarn v1 (classic) to avoid v4 migration issues
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 
 # Copy package files for dependency installation
 COPY package.json yarn.lock ./
 COPY tsconfig.json ./
 
 # Install all dependencies (including dev dependencies for building)
-RUN yarn install --immutable
+RUN yarn install --frozen-lockfile
 
 # Copy source code
 COPY src ./src
@@ -31,8 +31,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Enable corepack for yarn
-RUN corepack enable && corepack prepare yarn@stable --activate
+# Enable corepack and use yarn v1 (classic) to avoid v4 migration issues
+RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
@@ -42,10 +42,8 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY package.json yarn.lock ./
 
 # Install only production dependencies
-# Note: --production flag is deprecated but still functional in yarn v1
-# Alternative would be to manually prune devDependencies after install
-RUN yarn install --immutable --production --ignore-optional || \
-    (yarn install --production --ignore-optional && echo "Installed with lockfile update") && \
+# Using yarn v1 classic, --production flag works
+RUN yarn install --frozen-lockfile --production && \
     yarn cache clean
 
 # Copy built application from builder stage
