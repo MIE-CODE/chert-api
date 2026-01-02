@@ -9,7 +9,7 @@ export const signupSchema = z.object({
     email: z.string().email('Please provide a valid email'),
     phoneNumber: z
       .string()
-      .regex(/^\+?[1-9]\d{1,14}$/, 'Please provide a valid phone number in E.164 format')
+      .regex(/^[0-9]{10,11}$/, 'Invalid phone number (10-11 digits)')
       .optional(),
     password: z.string().min(6, 'Password must be at least 6 characters'),
   }),

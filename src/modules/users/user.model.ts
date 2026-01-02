@@ -41,9 +41,9 @@ const userSchema = new Schema<IUser>(
         validator: function(v: string | undefined | null) {
           // Allow undefined/null/empty, but if provided, must match format
           if (!v || v.trim() === '') return true;
-          return /^\+?[1-9]\d{1,14}$/.test(v);
+          return /^[0-9]{10,11}$/.test(v);
         },
-        message: 'Please provide a valid phone number in E.164 format',
+        message: 'Invalid phone number (10-11 digits)',
       },
     },
     password: {

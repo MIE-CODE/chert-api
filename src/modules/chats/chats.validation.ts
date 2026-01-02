@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const createChatSchema = z.object({
   body: z.object({
     participantIds: z.array(z.string()).optional(),
-    phoneNumbers: z.array(z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format')).optional(),
+    phoneNumbers: z.array(z.string().regex(/^[0-9]{10,11}$/, 'Invalid phone number (10-11 digits)')).optional(),
     isGroup: z.boolean().optional().default(false),
     name: z.string().min(1).max(50).optional(),
     description: z.string().max(200).optional(),
@@ -29,7 +29,7 @@ export const updateChatSchema = z.object({
 export const addParticipantsSchema = z.object({
   body: z.object({
     participantIds: z.array(z.string()).optional(),
-    phoneNumbers: z.array(z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format')).optional(),
+    phoneNumbers: z.array(z.string().regex(/^[0-9]{10,11}$/, 'Invalid phone number (10-11 digits)')).optional(),
   }).refine((data) => {
     const participantCount = (data.participantIds?.length || 0) + (data.phoneNumbers?.length || 0);
     return participantCount >= 1;
@@ -41,7 +41,7 @@ export const addParticipantsSchema = z.object({
 export const startChatSchema = z.object({
   body: z.object({
     participantId: z.string().optional(),
-    phoneNumber: z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format').optional(),
+    phoneNumber: z.string().regex(/^[0-9]{10,11}$/, 'Invalid phone number (10-11 digits)').optional(),
   }).refine((data) => {
     return !!(data.participantId || data.phoneNumber);
   }, {

@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const updateProfileSchema = z.object({
   body: z.object({
     username: z.string().min(3).max(30).optional(),
-    phoneNumber: z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Please provide a valid phone number in E.164 format').optional().or(z.literal('')),
+    phoneNumber: z.string().regex(/^[0-9]{10,11}$/, 'Invalid phone number (10-11 digits)').optional().or(z.literal('')),
     status: z.string().max(100).optional(),
     avatar: z.string().url().optional().or(z.literal('')),
   }),
