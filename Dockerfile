@@ -10,7 +10,7 @@ COPY package.json yarn.lock ./
 COPY tsconfig.json ./
 
 # Install dependencies
-RUN yarn install --frozen-lockfile
+RUN yarn install --immutable
 
 # Copy source code
 COPY src ./src
@@ -30,7 +30,7 @@ RUN corepack enable && corepack prepare yarn@stable --activate
 COPY package.json yarn.lock ./
 
 # Install only production dependencies
-RUN yarn install --frozen-lockfile --production
+RUN NODE_ENV=production yarn install --immutable
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
