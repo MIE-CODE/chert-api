@@ -1,13 +1,49 @@
+# Dependencies
 node_modules
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+
+# Build outputs
 dist
-.env
-uploads
 *.log
+
+# Development files
 .git
 .gitignore
-README.md
-.DS_Store
-coverage
 .vscode
 .idea
+*.swp
+*.swo
+*~
 
+# Test files
+coverage
+.nyc_output
+*.test.ts
+*.spec.ts
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Documentation
+README.md
+ENDPOINTS.md
+*.md
+
+# Docker files (don't copy into image)
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# Misc
+.DS_Store
+Thumbs.db
+uploads/*
+!uploads/.gitkeep
