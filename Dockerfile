@@ -33,7 +33,7 @@ COPY package.json ./
 COPY --from=builder /app/yarn.lock ./
 
 # Install only production dependencies
-RUN yarn install --production --immutable || yarn install --production
+RUN NODE_ENV=production yarn install --immutable || NODE_ENV=production yarn install
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
