@@ -26,13 +26,20 @@ export const signup = async (req: Request, res: Response, next: NextFunction): P
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create user
-    const user = await User.create({
+    // Prepare user data - only include phoneNumber if it's provided and not empty
+    const userData: any = {
       username,
       email,
-      phoneNumber,
       password: hashedPassword,
-    });
+    };
+
+    // Only add phoneNumber if it's provided and not empty
+    if (phoneNumber && phoneNumber.trim() !== '') {
+      userData.phoneNumber = phoneNumber.trim();
+    }
+
+    // Create user
+    const user = await User.create(userData);
 
     // Generate tokens
     const token = generateToken({

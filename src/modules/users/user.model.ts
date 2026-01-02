@@ -36,7 +36,15 @@ const userSchema = new Schema<IUser>(
       unique: true,
       sparse: true, // Allows multiple null values but enforces uniqueness for non-null values
       trim: true,
-      match: [/^\+?[1-9]\d{1,14}$/, 'Please provide a valid phone number in E.164 format'],
+      default: undefined,
+      validate: {
+        validator: function(v: string | undefined | null) {
+          // Allow undefined/null/empty, but if provided, must match format
+          if (!v || v.trim() === '') return true;
+          return /^\+?[1-9]\d{1,14}$/.test(v);
+        },
+        message: 'Please provide a valid phone number in E.164 format',
+      },
     },
     password: {
       type: String,
