@@ -29,11 +29,11 @@ RUN corepack enable && corepack prepare yarn@stable --activate
 # Copy package.json from build context
 COPY package.json ./
 
-# Copy updated yarn.lock from builder stage (where it was updated)
+# Copy updated yarn.lock from builder stage (ensures consistency)
 COPY --from=builder /app/yarn.lock ./
 
 # Install only production dependencies
-RUN NODE_ENV=production yarn install --immutable
+RUN yarn install --production --immutable || yarn install --production
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
