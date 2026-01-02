@@ -31,6 +31,7 @@ export const initializeSocket = async (httpServer: HTTPServer): Promise<SocketIO
   });
 
   // Use Redis adapter if available (for scaling)
+  // Only attempt if Redis client is connected
   const redisClient = getRedisClient();
   if (redisClient) {
     try {
@@ -38,15 +39,37 @@ export const initializeSocket = async (httpServer: HTTPServer): Promise<SocketIO
       const host = process.env.REDIS_HOST || 'localhost';
       const port = parseInt(process.env.REDIS_PORT || '6379', 10);
       
-      const pubClient = createClient({ socket: { host, port } });
-      const subClient = createClient({ socket: { host, port } });
+      const pubClient = createClient({ 
+        socket: { 
+          host, 
+          port,
+          connectTimeout: 5000,
+          reconnectStrategy: false,
+        } 
+      });
+      const subClient = createClient({ 
+        socket: { 
+          host, 
+          port,
+          connectTimeout: 5000,
+          reconnectStrategy: false,
+        } 
+      });
       
-      await Promise.all([pubClient.connect(), subClient.connect()]);
+      await Promise.race([
+        Promise.all([pubClient.connect(), subClient.connect()]),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Redis adapter connection timeout')), 5000)
+        )
+      ]);
+      
       io.adapter(createAdapter(pubClient, subClient));
       logger.info('✅ Socket.IO Redis adapter enabled');
-    } catch (error) {
-      logger.warn('Failed to setup Redis adapter, continuing without it:', error);
+    } catch (error: any) {
+      logger.info('ℹ️  Socket.IO Redis adapter not available (optional for single-instance deployments)');
     }
+  } else {
+    logger.info('ℹ️  Socket.IO running without Redis adapter (single-instance mode)');
   }
 
   // Socket authentication middleware
