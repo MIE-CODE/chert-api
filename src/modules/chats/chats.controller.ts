@@ -73,6 +73,15 @@ const sendChatNotification = async (
 
     // Emit message to the recipient via Socket.IO if available
     if (io) {
+      // First, ensure both users join the chat room if they're connected
+      const sockets = await io.fetchSockets();
+      for (const socket of sockets) {
+        const socketUser = (socket as any).data?.user as { id?: string } | undefined;
+        if (socketUser && (socketUser.id === senderId || socketUser.id === recipientId)) {
+          socket.join(`chat:${chatId}`);
+        }
+      }
+
       // Emit to the chat room (both users will receive it if they're in the room)
       io.to(`chat:${chatId}`).emit('new_message', {
         message,
@@ -80,7 +89,6 @@ const sendChatNotification = async (
 
       // Also try to emit directly to recipient's socket if they're online
       // This ensures immediate notification even if they haven't joined the chat room yet
-      const sockets = await io.fetchSockets();
       for (const socket of sockets) {
         const socketUser = (socket as any).data?.user as { id?: string } | undefined;
         if (socketUser?.id === recipientId) {

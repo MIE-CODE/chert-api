@@ -1,4 +1,5 @@
 import { Response, NextFunction } from 'express';
+import { Server as SocketIOServer } from 'socket.io';
 import Message from './message.model';
 import Chat from '../chats/chat.model';
 import { AuthRequest } from '../../types';
@@ -52,6 +53,15 @@ export const sendMessage = async (req: AuthRequest, res: Response, next: NextFun
 
     await message.populate('senderId', 'username avatar');
     await message.populate('replyTo');
+
+    // Emit Socket.IO event for real-time updates
+    const io = req.app.get('io') as SocketIOServer | undefined;
+    if (io) {
+      // Emit to all participants in the chat room
+      io.to(`chat:${chatId}`).emit('new_message', {
+        message,
+      });
+    }
 
     res.status(201).json({
       success: true,
