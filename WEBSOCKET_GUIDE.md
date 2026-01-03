@@ -5,13 +5,16 @@ This guide explains how to connect your frontend application to the Chert API We
 ## Connection Details
 
 - **Protocol**: Socket.IO v4
-- **Port**: Same as HTTP server (default: 3000)
+- **Port**: Same as HTTP server (no separate port needed)
 - **Development URL**: `http://localhost:3000`
-- **Production URL**: `https://chert-api.onrender.com`
+- **Production URL**: `https://chert-api.onrender.com` (uses HTTPS/WSS automatically)
 - **CORS**: Enabled for all origins
 - **Authentication**: Required via JWT token
 
-> **Note**: Use the `API_URI` environment variable in your frontend to configure the server URL dynamically.
+> **Important**: 
+> - Socket.IO automatically uses **WSS** (WebSocket Secure) when connecting to HTTPS URLs
+> - No need to specify `wss://` - just use `https://chert-api.onrender.com`
+> - Use the `API_URI` environment variable in your frontend to configure the server URL dynamically
 
 ## Frontend Connection Example
 
@@ -22,7 +25,7 @@ import { io } from 'socket.io-client';
 
 // Get server URL from environment variable or use default
 const API_URI = process.env.API_URI || 'http://localhost:3000';
-// Production: https://chert-api.onrender.com
+// Production: https://chert-api.onrender.com (Socket.IO will use WSS automatically)
 // Development: http://localhost:3000
 
 // Get your JWT token from login/signup response
@@ -79,7 +82,7 @@ function useSocket(token: string | null) {
 
     // Get server URL from environment variable
     const API_URI = import.meta.env.VITE_API_URI || process.env.REACT_APP_API_URI || 'http://localhost:3000';
-    // Production: https://chert-api.onrender.com
+    // Production: https://chert-api.onrender.com (Socket.IO automatically uses WSS)
 
     // Create socket connection
     const newSocket = io(API_URI, {
@@ -369,13 +372,19 @@ const socket = io('http://localhost:3000', {
 1. **Use Environment Variables**: 
    - Set `API_URI=https://chert-api.onrender.com` in your frontend environment
    - Use `process.env.API_URI` or `import.meta.env.VITE_API_URI` (Vite) or `process.env.REACT_APP_API_URI` (Create React App)
-2. **HTTPS/WSS**: Production URL `https://chert-api.onrender.com` automatically uses secure WebSocket (WSS)
+2. **HTTPS/WSS**: 
+   - Production URL: `https://chert-api.onrender.com`
+   - Socket.IO automatically uses **WSS** (WebSocket Secure) when connecting to HTTPS URLs
+   - **No need to specify `wss://`** - just use `https://chert-api.onrender.com`
+   - Socket.IO client will automatically upgrade to secure WebSocket
 3. **Token Refresh**: Implement token refresh logic for long-lived connections
 4. **Error Handling**: Add comprehensive error handling and user feedback
 5. **Connection Status**: Show connection status to users
 6. **Render.com Specific**: 
    - Render.com automatically handles HTTPS/WSS
    - No additional configuration needed for secure connections
+   - WebSocket connections work seamlessly with the HTTPS endpoint
+   - Socket.IO will automatically use the correct transport (WSS for HTTPS)
 
 ## Example: Complete Chat Integration
 

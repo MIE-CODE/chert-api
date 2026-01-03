@@ -212,6 +212,20 @@ export const initializeSocket = async (httpServer: HTTPServer): Promise<SocketIO
         await message.populate('senderId', 'username avatar');
         await message.populate('replyTo');
 
+        // Ensure all participants are in the chat room before emitting
+        const chatParticipants = chat.participants.map((p: any) => 
+          p.toString ? p.toString() : p
+        );
+        
+        // Get all connected sockets and add participants to the room
+        const sockets = await io.fetchSockets();
+        for (const socket of sockets) {
+          const socketUser = (socket as any).data?.user as { id?: string } | undefined;
+          if (socketUser?.id && chatParticipants.includes(socketUser.id)) {
+            socket.join(`chat:${chatId}`);
+          }
+        }
+
         // Emit to all participants in the chat
         io.to(`chat:${chatId}`).emit('new_message', {
           message,

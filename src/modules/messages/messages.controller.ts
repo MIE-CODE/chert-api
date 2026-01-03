@@ -57,6 +57,20 @@ export const sendMessage = async (req: AuthRequest, res: Response, next: NextFun
     // Emit Socket.IO event for real-time updates
     const io = req.app.get('io') as SocketIOServer | undefined;
     if (io) {
+      // Ensure all participants are in the chat room
+      const chatParticipants = chat.participants.map((p: any) => 
+        p.toString ? p.toString() : p
+      );
+      
+      // Get all connected sockets and add participants to the room
+      const sockets = await io.fetchSockets();
+      for (const socket of sockets) {
+        const socketUser = (socket as any).data?.user as { id?: string } | undefined;
+        if (socketUser?.id && chatParticipants.includes(socketUser.id)) {
+          socket.join(`chat:${chatId}`);
+        }
+      }
+
       // Emit to all participants in the chat room
       io.to(`chat:${chatId}`).emit('new_message', {
         message,

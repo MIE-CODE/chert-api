@@ -87,12 +87,12 @@ const sendChatNotification = async (
         message,
       });
 
-      // Also try to emit directly to recipient's socket if they're online
-      // This ensures immediate notification even if they haven't joined the chat room yet
+      // Also emit directly to recipient's socket to ensure they receive it
+      // This is a backup in case they're not in the room yet
       for (const socket of sockets) {
         const socketUser = (socket as any).data?.user as { id?: string } | undefined;
         if (socketUser?.id === recipientId) {
-          // Emit new chat notification to the recipient
+          // Emit new chat notification AND the message to the recipient
           socket.emit('new_chat', {
             chatId,
             message,
@@ -101,6 +101,10 @@ const sendChatNotification = async (
               username: sender.username,
               avatar: sender.avatar,
             },
+          });
+          // Also emit the message directly to ensure they receive it
+          socket.emit('new_message', {
+            message,
           });
           break; // Found the recipient, no need to continue
         }
