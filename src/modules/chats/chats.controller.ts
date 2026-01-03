@@ -129,7 +129,7 @@ export const getChats = async (req: AuthRequest, res: Response, next: NextFuncti
 
     res.json({
       success: true,
-      data: { chats },
+      data:  chats ,
     });
   } catch (error) {
     next(error);
