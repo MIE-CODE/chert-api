@@ -22,12 +22,17 @@ export const initializeSocket = async (httpServer: HTTPServer): Promise<SocketIO
   const io = new SocketIOServer(httpServer, {
     cors: {
       origin: (_origin, callback) => {
-        // Allow all origins
+        // Allow all origins for frontend flexibility
         callback(null, true);
       },
       methods: ['GET', 'POST'],
       credentials: true,
+      allowedHeaders: ['Authorization', 'Content-Type'],
     },
+    // Allow both websocket and polling transports for better compatibility
+    transports: ['websocket', 'polling'],
+    // Enable reconnection for better user experience
+    allowEIO3: true, // Support Socket.IO v3 clients if needed
   });
 
   // Use Redis adapter if available (for scaling)
