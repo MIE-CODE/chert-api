@@ -9,12 +9,23 @@ export const signup = async (req: Request, res: Response, next: NextFunction): P
   try {
     const { username, email, phoneNumber, password } = req.body;
 
+    // Trim and validate phoneNumber if provided
+    const trimmedPhoneNumber = phoneNumber && typeof phoneNumber === 'string' 
+      ? phoneNumber.trim() 
+      : undefined;
+
     // Check if user already exists
     const existingUserQuery: any = {
       $or: [{ email }, { username }],
     };
-    if (phoneNumber) {
-      existingUserQuery.$or.push({ phoneNumber });
+    
+    // Add phoneNumber to duplicate check if provided and valid
+    if (trimmedPhoneNumber && trimmedPhoneNumber !== '') {
+      // Validate phone number format before checking duplicates
+      if (!/^[0-9]{10,11}$/.test(trimmedPhoneNumber)) {
+        throw new AppError('Invalid phone number format (must be 10-11 digits)', 400);
+      }
+      existingUserQuery.$or.push({ phoneNumber: trimmedPhoneNumber });
     }
 
     const existingUser = await User.findOne(existingUserQuery);
@@ -26,19 +37,19 @@ export const signup = async (req: Request, res: Response, next: NextFunction): P
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Prepare user data - only include phoneNumber if it's provided and not empty
+    // Prepare user data
     const userData: any = {
       username,
       email,
       password: hashedPassword,
     };
 
-    // Only add phoneNumber if it's provided and not empty
-    if (phoneNumber && phoneNumber.trim() !== '') {
-      userData.phoneNumber = phoneNumber.trim();
+    // Add phoneNumber to userData if provided and valid
+    if (trimmedPhoneNumber && trimmedPhoneNumber !== '') {
+      userData.phoneNumber = trimmedPhoneNumber;
     }
 
-    // Create user
+    // Create user - phoneNumber will be stored if provided
     const user = await User.create(userData);
 
     // Generate tokens
