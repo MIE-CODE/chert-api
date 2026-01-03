@@ -22,6 +22,26 @@ const resolvePhoneNumbersToUserIds = async (phoneNumbers: string[]): Promise<str
   return users.map(user => user._id.toString());
 };
 
+// Helper function to format chat response - filter out current user from participants in one-to-one chats
+const formatChatResponse = (chat: any, currentUserId: string) => {
+  const chatObj = chat.toObject ? chat.toObject() : { ...chat };
+  
+  // For one-to-one chats, only show the other participant (not the current user)
+  if (!chatObj.isGroup && chatObj.participants && Array.isArray(chatObj.participants)) {
+    chatObj.participants = chatObj.participants.filter(
+      (participant: any) => {
+        // Handle both populated objects and plain IDs
+        const participantId = participant._id?.toString() || 
+                              participant.toString() || 
+                              (typeof participant === 'string' ? participant : null);
+        return participantId && participantId !== currentUserId;
+      }
+    );
+  }
+  
+  return chatObj;
+};
+
 export const createChat = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = req.user?.id;
@@ -64,10 +84,12 @@ export const createChat = async (req: AuthRequest, res: Response, next: NextFunc
       await chat.populate('participants', 'username avatar isOnline phoneNumber');
       await chat.populate('admin', 'username avatar phoneNumber');
 
+      const formattedChat = formatChatResponse(chat, userId);
+
       res.status(201).json({
         success: true,
         message: 'Group chat created successfully',
-        data: { chat },
+        data: { chat: formattedChat },
       });
     } else {
       // Create one-to-one chat
@@ -85,10 +107,11 @@ export const createChat = async (req: AuthRequest, res: Response, next: NextFunc
 
       if (existingChat) {
         await existingChat.populate('participants', 'username avatar isOnline phoneNumber');
+        const formattedChat = formatChatResponse(existingChat, userId);
         res.json({
           success: true,
           message: 'Chat already exists',
-          data: { chat: existingChat },
+          data: { chat: formattedChat },
         });
         return;
       }
@@ -100,10 +123,12 @@ export const createChat = async (req: AuthRequest, res: Response, next: NextFunc
 
       await chat.populate('participants', 'username avatar isOnline phoneNumber');
 
+      const formattedChat = formatChatResponse(chat, userId);
+
       res.status(201).json({
         success: true,
         message: 'Chat created successfully',
-        data: { chat },
+        data: { chat: formattedChat },
       });
     }
   } catch (error) {
@@ -127,9 +152,12 @@ export const getChats = async (req: AuthRequest, res: Response, next: NextFuncti
       .populate('lastMessage')
       .sort({ updatedAt: -1 });
 
+    // Format chats - filter out current user from one-to-one chat participants
+    const formattedChats = chats.map(chat => formatChatResponse(chat, userId));
+
     res.json({
       success: true,
-      data:  chats ,
+      data: { chats: formattedChats },
     });
   } catch (error) {
     next(error);
@@ -157,9 +185,11 @@ export const getChatById = async (req: AuthRequest, res: Response, next: NextFun
       throw new AppError('Chat not found', 404);
     }
 
+    const formattedChat = formatChatResponse(chat, userId);
+
     res.json({
       success: true,
-      data: { chat },
+      data: { chat: formattedChat },
     });
   } catch (error) {
     next(error);
@@ -203,10 +233,12 @@ export const updateChat = async (req: AuthRequest, res: Response, next: NextFunc
       .populate('participants', 'username avatar isOnline phoneNumber')
       .populate('admin', 'username avatar phoneNumber');
 
+    const formattedChat = formatChatResponse(updatedChat, userId);
+
     res.json({
       success: true,
       message: 'Chat updated successfully',
-      data: { chat: updatedChat },
+      data: { chat: formattedChat },
     });
   } catch (error) {
     next(error);
@@ -265,10 +297,12 @@ export const addParticipants = async (req: AuthRequest, res: Response, next: Nex
     await chat.populate('participants', 'username avatar isOnline phoneNumber');
     await chat.populate('admin', 'username avatar phoneNumber');
 
+    const formattedChat = formatChatResponse(chat, userId);
+
     res.json({
       success: true,
       message: 'Participants added successfully',
-      data: { chat },
+      data: { chat: formattedChat },
     });
   } catch (error) {
     next(error);
@@ -322,10 +356,12 @@ export const removeParticipant = async (req: AuthRequest, res: Response, next: N
     await chat.populate('participants', 'username avatar isOnline phoneNumber');
     await chat.populate('admin', 'username avatar phoneNumber');
 
+    const formattedChat = formatChatResponse(chat, userId);
+
     res.json({
       success: true,
       message: 'Participant removed successfully',
-      data: { chat },
+      data: { chat: formattedChat },
     });
   } catch (error) {
     next(error);
@@ -408,10 +444,11 @@ export const startChat = async (req: AuthRequest, res: Response, next: NextFunct
 
     if (existingChat) {
       await existingChat.populate('participants', 'username avatar isOnline phoneNumber');
+      const formattedChat = formatChatResponse(existingChat, userId);
       res.json({
         success: true,
         message: 'Chat already exists',
-        data: existingChat ,
+        data: { chat: formattedChat },
       });
       return;
     }
@@ -424,10 +461,12 @@ export const startChat = async (req: AuthRequest, res: Response, next: NextFunct
 
     await chat.populate('participants', 'username avatar isOnline phoneNumber');
 
+    const formattedChat = formatChatResponse(chat, userId);
+
     res.status(201).json({
       success: true,
       message: 'Chat started successfully',
-      data: { chat },
+      data: { chat: formattedChat },
     });
   } catch (error) {
     next(error);
