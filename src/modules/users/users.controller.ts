@@ -145,8 +145,8 @@ export const searchUsers = async (req: AuthRequest, res: Response, next: NextFun
 
     res.json({
       success: true,
-      data: {
-        users: users.map((user) => ({
+      data: 
+       users.map((user) => ({
           id: user._id,
           username: user.username,
           phoneNumber: user.phoneNumber,
@@ -155,7 +155,7 @@ export const searchUsers = async (req: AuthRequest, res: Response, next: NextFun
           isOnline: user.isOnline,
           lastSeen: user.lastSeen,
         })),
-      },
+  
     });
   } catch (error) {
     next(error);
