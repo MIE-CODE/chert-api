@@ -1,9 +1,11 @@
 import { Response, NextFunction } from 'express';
+import { Server as SocketIOServer } from 'socket.io';
 import Chat from './chat.model';
 import Message from '../messages/message.model';
 import User from '../users/user.model';
 import { AuthRequest } from '../../types';
 import { AppError } from '../../utils/errors';
+import { MessageStatus, MessageType } from '../../types';
 
 // Helper function to resolve phone numbers to user IDs
 const resolvePhoneNumbersToUserIds = async (phoneNumbers: string[]): Promise<string[]> => {
@@ -40,6 +42,66 @@ const formatChatResponse = (chat: any, currentUserId: string) => {
   }
   
   return chatObj;
+};
+
+// Helper function to send notification message when a new chat is created
+const sendChatNotification = async (
+  chatId: string,
+  senderId: string,
+  recipientId: string,
+  io?: SocketIOServer
+): Promise<void> => {
+  try {
+    // Get sender info
+    const sender = await User.findById(senderId).select('username avatar');
+    if (!sender) return;
+
+    // Create a welcome message
+    const message = await Message.create({
+      chatId,
+      senderId,
+      content: `${sender.username} started a conversation with you`,
+      type: MessageType.TEXT,
+      status: MessageStatus.SENT,
+    });
+
+    // Update chat's last message
+    await Chat.findByIdAndUpdate(chatId, { lastMessage: message._id });
+
+    // Populate message
+    await message.populate('senderId', 'username avatar');
+
+    // Emit message to the recipient via Socket.IO if available
+    if (io) {
+      // Emit to the chat room (both users will receive it if they're in the room)
+      io.to(`chat:${chatId}`).emit('new_message', {
+        message,
+      });
+
+      // Also try to emit directly to recipient's socket if they're online
+      // This ensures immediate notification even if they haven't joined the chat room yet
+      const sockets = await io.fetchSockets();
+      for (const socket of sockets) {
+        const socketUser = (socket as any).data?.user as { id?: string } | undefined;
+        if (socketUser?.id === recipientId) {
+          // Emit new chat notification to the recipient
+          socket.emit('new_chat', {
+            chatId,
+            message,
+            sender: {
+              id: sender._id,
+              username: sender.username,
+              avatar: sender.avatar,
+            },
+          });
+          break; // Found the recipient, no need to continue
+        }
+      }
+    }
+  } catch (error) {
+    // Silently fail - notification is not critical
+    console.error('Error sending chat notification:', error);
+  }
 };
 
 export const createChat = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -124,6 +186,10 @@ export const createChat = async (req: AuthRequest, res: Response, next: NextFunc
       await chat.populate('participants', 'username avatar isOnline phoneNumber');
 
       const formattedChat = formatChatResponse(chat, userId);
+
+      // Send notification message to the second user
+      const io = req.app.get('io') as SocketIOServer | undefined;
+      await sendChatNotification(chat._id.toString(), userId, otherUserId, io);
 
       res.status(201).json({
         success: true,
@@ -462,6 +528,10 @@ export const startChat = async (req: AuthRequest, res: Response, next: NextFunct
     await chat.populate('participants', 'username avatar isOnline phoneNumber');
 
     const formattedChat = formatChatResponse(chat, userId);
+
+    // Send notification message to the second user
+    const io = req.app.get('io') as SocketIOServer | undefined;
+    await sendChatNotification(chat._id.toString(), userId, otherUserId, io);
 
     res.status(201).json({
       success: true,
