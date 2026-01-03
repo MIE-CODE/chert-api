@@ -6,9 +6,12 @@ This guide explains how to connect your frontend application to the Chert API We
 
 - **Protocol**: Socket.IO v4
 - **Port**: Same as HTTP server (default: 3000)
-- **URL**: `http://localhost:3000` (development) or your production URL
+- **Development URL**: `http://localhost:3000`
+- **Production URL**: `https://chert-api.onrender.com`
 - **CORS**: Enabled for all origins
 - **Authentication**: Required via JWT token
+
+> **Note**: Use the `API_URI` environment variable in your frontend to configure the server URL dynamically.
 
 ## Frontend Connection Example
 
@@ -17,11 +20,16 @@ This guide explains how to connect your frontend application to the Chert API We
 ```javascript
 import { io } from 'socket.io-client';
 
+// Get server URL from environment variable or use default
+const API_URI = process.env.API_URI || 'http://localhost:3000';
+// Production: https://chert-api.onrender.com
+// Development: http://localhost:3000
+
 // Get your JWT token from login/signup response
 const token = localStorage.getItem('token'); // or from your auth state
 
 // Connect to Socket.IO server
-const socket = io('http://localhost:3000', {
+const socket = io(API_URI, {
   auth: {
     token: token // Pass token in auth object
   },
@@ -69,8 +77,12 @@ function useSocket(token: string | null) {
       return;
     }
 
+    // Get server URL from environment variable
+    const API_URI = import.meta.env.VITE_API_URI || process.env.REACT_APP_API_URI || 'http://localhost:3000';
+    // Production: https://chert-api.onrender.com
+
     // Create socket connection
-    const newSocket = io('http://localhost:3000', {
+    const newSocket = io(API_URI, {
       auth: {
         token: token
       },
@@ -354,11 +366,16 @@ const socket = io('http://localhost:3000', {
 
 ## Production Considerations
 
-1. **Update URL**: Change `http://localhost:3000` to your production URL
-2. **HTTPS/WSS**: Use `https://` and `wss://` in production
+1. **Use Environment Variables**: 
+   - Set `API_URI=https://chert-api.onrender.com` in your frontend environment
+   - Use `process.env.API_URI` or `import.meta.env.VITE_API_URI` (Vite) or `process.env.REACT_APP_API_URI` (Create React App)
+2. **HTTPS/WSS**: Production URL `https://chert-api.onrender.com` automatically uses secure WebSocket (WSS)
 3. **Token Refresh**: Implement token refresh logic for long-lived connections
 4. **Error Handling**: Add comprehensive error handling and user feedback
 5. **Connection Status**: Show connection status to users
+6. **Render.com Specific**: 
+   - Render.com automatically handles HTTPS/WSS
+   - No additional configuration needed for secure connections
 
 ## Example: Complete Chat Integration
 
@@ -442,7 +459,8 @@ class ChatManager {
 }
 
 // Usage
-const chatManager = new ChatManager('http://localhost:3000', token);
+const API_URI = process.env.API_URI || 'http://localhost:3000';
+const chatManager = new ChatManager(API_URI, token);
 ```
 
 ## Troubleshooting
@@ -453,6 +471,8 @@ const chatManager = new ChatManager('http://localhost:3000', token);
 - ✅ Check CORS settings (should allow all origins)
 - ✅ Check browser console for errors
 - ✅ Try using `polling` transport only: `transports: ['polling']`
+- ✅ For production: Ensure `API_URI` is set to `https://chert-api.onrender.com`
+- ✅ Check if Render.com service is running and not sleeping (free tier may sleep after inactivity)
 
 ### Messages Not Received
 - ✅ Ensure user has joined the chat room: `socket.emit('join_chat', { chatId })`
@@ -464,7 +484,55 @@ const chatManager = new ChatManager('http://localhost:3000', token);
 - ✅ Token must be valid JWT from login/signup
 - ✅ Token must not be expired
 
+## Environment Variables
+
+### Frontend Configuration
+
+Create a `.env` file in your frontend project:
+
+```env
+# Development
+API_URI=http://localhost:3000
+
+# Production
+API_URI=https://chert-api.onrender.com
+```
+
+### Framework-Specific Examples
+
+**Vite (Vue/React):**
+```env
+VITE_API_URI=https://chert-api.onrender.com
+```
+```javascript
+const API_URI = import.meta.env.VITE_API_URI;
+```
+
+**Create React App:**
+```env
+REACT_APP_API_URI=https://chert-api.onrender.com
+```
+```javascript
+const API_URI = process.env.REACT_APP_API_URI;
+```
+
+**Next.js:**
+```env
+NEXT_PUBLIC_API_URI=https://chert-api.onrender.com
+```
+```javascript
+const API_URI = process.env.NEXT_PUBLIC_API_URI;
+```
+
+**Vanilla JavaScript:**
+```javascript
+// Use environment variable or fallback
+const API_URI = window.API_URI || 'https://chert-api.onrender.com';
+```
+
 ## Support
 
 For issues or questions, check the main README or API documentation.
+
+**Production Server**: https://chert-api.onrender.com
 
