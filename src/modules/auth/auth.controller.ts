@@ -14,24 +14,31 @@ export const signup = async (req: Request, res: Response, next: NextFunction): P
       ? phoneNumber.trim() 
       : undefined;
 
-    // Check if user already exists
-    const existingUserQuery: any = {
-      $or: [{ email }, { username }],
-    };
-    
-    // Add phoneNumber to duplicate check if provided and valid
+    // Validate phone number format if provided
     if (trimmedPhoneNumber && trimmedPhoneNumber !== '') {
-      // Validate phone number format before checking duplicates
       if (!/^[0-9]{10,11}$/.test(trimmedPhoneNumber)) {
         throw new AppError('Invalid phone number format (must be 10-11 digits)', 400);
       }
-      existingUserQuery.$or.push({ phoneNumber: trimmedPhoneNumber });
     }
 
-    const existingUser = await User.findOne(existingUserQuery);
+    // Check if email already exists
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      throw new AppError('User with this email already exists', 409);
+    }
 
-    if (existingUser) {
-      throw new AppError('User with this email, username, or phone number already exists', 409);
+    // Check if username already exists
+    const existingUsername = await User.findOne({ username });
+    if (existingUsername) {
+      throw new AppError('Username already taken', 409);
+    }
+
+    // Check if phone number already exists (only if provided)
+    if (trimmedPhoneNumber && trimmedPhoneNumber !== '') {
+      const existingPhoneNumber = await User.findOne({ phoneNumber: trimmedPhoneNumber });
+      if (existingPhoneNumber) {
+        throw new AppError('Phone number is already registered to another user', 409);
+      }
     }
 
     // Hash password

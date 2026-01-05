@@ -40,7 +40,6 @@ export const updateProfile = async (req: AuthRequest, res: Response, next: NextF
 
     const updateData: any = {};
     if (username) updateData.username = username;
-    if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber || null; // Allow clearing phone number
     if (status !== undefined) updateData.status = status;
     if (avatar !== undefined) updateData.avatar = avatar;
 
@@ -52,11 +51,27 @@ export const updateProfile = async (req: AuthRequest, res: Response, next: NextF
       }
     }
 
-    // Check if phone number is already taken
-    if (phoneNumber) {
-      const existingUser = await User.findOne({ phoneNumber, _id: { $ne: userId } });
-      if (existingUser) {
-        throw new AppError('Phone number already taken', 409);
+    // Check if phone number is already taken by another user
+    if (phoneNumber !== undefined) {
+      if (phoneNumber && phoneNumber.trim() !== '') {
+        // Validate phone number format
+        const trimmedPhoneNumber = phoneNumber.trim();
+        if (!/^[0-9]{10,11}$/.test(trimmedPhoneNumber)) {
+          throw new AppError('Invalid phone number format (must be 10-11 digits)', 400);
+        }
+        
+        // Check if phone number is already taken by another user
+        const existingUser = await User.findOne({ 
+          phoneNumber: trimmedPhoneNumber, 
+          _id: { $ne: userId } 
+        });
+        if (existingUser) {
+          throw new AppError('Phone number is already registered to another user', 409);
+        }
+        updateData.phoneNumber = trimmedPhoneNumber;
+      } else {
+        // Allow clearing phone number
+        updateData.phoneNumber = null;
       }
     }
 
